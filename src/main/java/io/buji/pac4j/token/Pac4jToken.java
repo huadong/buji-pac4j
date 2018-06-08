@@ -43,7 +43,7 @@ public class Pac4jToken implements RememberMeAuthenticationToken {
 
     @Override
     public Object getPrincipal() {
-        return ProfileHelper.flatIntoOneProfile(profiles);
+        return ProfileHelper.flatIntoOneProfile(profiles.values());
     }
 
     @Override

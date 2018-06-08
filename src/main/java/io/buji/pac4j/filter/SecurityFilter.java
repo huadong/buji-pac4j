@@ -35,7 +35,8 @@ import org.pac4j.core.config.Config;
 import org.pac4j.core.context.J2EContext;
 import org.pac4j.core.context.session.SessionStore;
 import org.pac4j.core.engine.SecurityLogic;
-import org.pac4j.core.http.J2ENopHttpActionAdapter;
+import org.pac4j.core.http.adapter.HttpActionAdapter;
+import org.pac4j.core.http.adapter.J2ENopHttpActionAdapter;
 
 import io.buji.pac4j.context.ShiroSessionStore;
 import io.buji.pac4j.engine.ShiroSecurityLogic;
@@ -62,6 +63,8 @@ public class SecurityFilter implements Filter {
     private String matchers;
 
     private Boolean multiProfile;
+    
+    private HttpActionAdapter<Object, J2EContext> httpActionAdapter;
 
     public SecurityFilter() {
         securityLogic = new ShiroSecurityLogic<>();
@@ -80,13 +83,14 @@ public class SecurityFilter implements Filter {
         final HttpServletResponse response = (HttpServletResponse) servletResponse;
         final SessionStore<J2EContext> sessionStore = config.getSessionStore();
         final J2EContext context = new J2EContext(request, response, sessionStore != null ? sessionStore : ShiroSessionStore.INSTANCE);
+        final HttpActionAdapter<Object, J2EContext> adapter = httpActionAdapter != null ? httpActionAdapter : J2ENopHttpActionAdapter.INSTANCE;
 
-        securityLogic.perform(context, config, (ctx, parameters) -> {
+        securityLogic.perform(context, config, (cctx, profiles, parameters) -> {
 
             filterChain.doFilter(request, response);
             return null;
 
-        }, J2ENopHttpActionAdapter.INSTANCE, clients, authorizers, matchers, multiProfile);
+        }, adapter, clients, authorizers, matchers, multiProfile);
     }
 
     @Override
@@ -138,5 +142,13 @@ public class SecurityFilter implements Filter {
 
     public void setMultiProfile(final Boolean multiProfile) {
         this.multiProfile = multiProfile;
+    }
+    
+    public HttpActionAdapter<Object, J2EContext> getHttpActionAdapter() {
+        return httpActionAdapter;
+    }
+
+    public void setHttpActionAdapter(final HttpActionAdapter<Object, J2EContext> httpActionAdapter) {
+        this.httpActionAdapter = httpActionAdapter;
     }
 }

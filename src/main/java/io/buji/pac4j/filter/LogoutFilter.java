@@ -1,21 +1,28 @@
 package io.buji.pac4j.filter;
 
-import io.buji.pac4j.context.ShiroSessionStore;
-import io.buji.pac4j.profile.ShiroProfileManager;
+import static org.pac4j.core.util.CommonHelper.assertNotNull;
+
+import java.io.IOException;
+
+import javax.servlet.Filter;
+import javax.servlet.FilterChain;
+import javax.servlet.FilterConfig;
+import javax.servlet.ServletException;
+import javax.servlet.ServletRequest;
+import javax.servlet.ServletResponse;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
 import org.pac4j.core.config.Config;
 import org.pac4j.core.context.J2EContext;
 import org.pac4j.core.context.session.SessionStore;
 import org.pac4j.core.engine.DefaultLogoutLogic;
 import org.pac4j.core.engine.LogoutLogic;
-import org.pac4j.core.http.J2ENopHttpActionAdapter;
+import org.pac4j.core.http.adapter.HttpActionAdapter;
+import org.pac4j.core.http.adapter.J2ENopHttpActionAdapter;
 
-import javax.servlet.*;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
-import java.io.IOException;
-
-import static org.pac4j.core.util.CommonHelper.assertNotNull;
+import io.buji.pac4j.context.ShiroSessionStore;
+import io.buji.pac4j.profile.ShiroProfileManager;
 
 /**
  * <p>This filter handles the (application + identity provider) logout process, based on the {@link #logoutLogic}.</p>
@@ -40,6 +47,10 @@ public class LogoutFilter implements Filter {
     private Boolean localLogout;
 
     private Boolean centralLogout;
+    
+    private Boolean destroySession;
+    
+    private HttpActionAdapter<Object, J2EContext> httpActionAdapter;
 
     public LogoutFilter() {
         logoutLogic = new DefaultLogoutLogic<>();
@@ -59,8 +70,9 @@ public class LogoutFilter implements Filter {
         final HttpServletResponse response = (HttpServletResponse) servletResponse;
         final SessionStore<J2EContext> sessionStore = config.getSessionStore();
         final J2EContext context = new J2EContext(request, response, sessionStore != null ? sessionStore : ShiroSessionStore.INSTANCE);
+        final HttpActionAdapter<Object, J2EContext> adapter = httpActionAdapter != null ? httpActionAdapter : J2ENopHttpActionAdapter.INSTANCE;
 
-        logoutLogic.perform(context, config, J2ENopHttpActionAdapter.INSTANCE, this.defaultUrl, this.logoutUrlPattern, this.localLogout, false, this.centralLogout);
+        logoutLogic.perform(context, config, adapter, this.defaultUrl, this.logoutUrlPattern, this.localLogout, this.destroySession, this.centralLogout);
     }
 
     @Override
@@ -113,4 +125,20 @@ public class LogoutFilter implements Filter {
     public void setCentralLogout(final Boolean centralLogout) {
         this.centralLogout = centralLogout;
     }
+    
+    public HttpActionAdapter<Object, J2EContext> getHttpActionAdapter() {
+        return httpActionAdapter;
+    }
+
+    public void setHttpActionAdapter(final HttpActionAdapter<Object, J2EContext> httpActionAdapter) {
+        this.httpActionAdapter = httpActionAdapter;
+    }
+    
+    public Boolean getDestroySession() {
+		return destroySession;
+	}
+    
+    public void setDestroySession(Boolean destroySession) {
+		this.destroySession = destroySession;
+	}
 }

@@ -18,14 +18,14 @@
  */
 package io.buji.pac4j.subject;
 
-import org.pac4j.core.profile.CommonProfile;
-import org.pac4j.core.profile.ProfileHelper;
-import org.pac4j.core.util.CommonHelper;
-
 import java.io.Serializable;
 import java.security.Principal;
 import java.util.LinkedHashMap;
 import java.util.List;
+
+import org.pac4j.core.profile.CommonProfile;
+import org.pac4j.core.profile.ProfileHelper;
+import org.pac4j.core.util.CommonHelper;
 
 /**
  * A principal created by Pac4JRealm that wraps a CommonProfile.
@@ -72,7 +72,7 @@ public class Pac4jPrincipal implements Principal, Serializable {
      * @return the main profile
      */
     public CommonProfile getProfile() {
-        return ProfileHelper.flatIntoOneProfile(this.profiles).get();
+        return ProfileHelper.flatIntoOneProfile(this.getProfiles()).get();
     }
 
     /**
@@ -117,6 +117,6 @@ public class Pac4jPrincipal implements Principal, Serializable {
 
     @Override
     public String toString() {
-        return CommonHelper.toString(this.getClass(), "profiles", getProfiles());
+        return CommonHelper.toNiceString(this.getClass(), "profiles", getProfiles());
     }
 }

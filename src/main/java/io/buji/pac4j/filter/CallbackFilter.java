@@ -35,8 +35,8 @@ import org.pac4j.core.config.Config;
 import org.pac4j.core.context.J2EContext;
 import org.pac4j.core.context.session.SessionStore;
 import org.pac4j.core.engine.CallbackLogic;
-import org.pac4j.core.http.HttpActionAdapter;
-import org.pac4j.core.http.J2ENopHttpActionAdapter;
+import org.pac4j.core.http.adapter.HttpActionAdapter;
+import org.pac4j.core.http.adapter.J2ENopHttpActionAdapter;
 
 import io.buji.pac4j.context.ShiroSessionStore;
 import io.buji.pac4j.engine.ShiroCallbackLogic;
@@ -60,6 +60,13 @@ public class CallbackFilter implements Filter {
 
     private Boolean multiProfile;
 
+    private Boolean saveInSession;
+    
+    private Boolean renewSession;
+    
+    private String client;
+    
+
     private HttpActionAdapter<Object, J2EContext> httpActionAdapter;
 
     public CallbackFilter() {
@@ -81,7 +88,7 @@ public class CallbackFilter implements Filter {
         final J2EContext context = new J2EContext(request, response, sessionStore != null ? sessionStore : ShiroSessionStore.INSTANCE);
         final HttpActionAdapter<Object, J2EContext> adapter = httpActionAdapter != null ? httpActionAdapter : J2ENopHttpActionAdapter.INSTANCE;
 
-        callbackLogic.perform(context, config, adapter, this.defaultUrl, this.multiProfile, false);
+        callbackLogic.perform(context, config, adapter, this.defaultUrl, this.saveInSession, this.multiProfile, this.renewSession, this.client);
     }
 
     @Override
@@ -118,6 +125,22 @@ public class CallbackFilter implements Filter {
     public void setMultiProfile(final Boolean multiProfile) {
         this.multiProfile = multiProfile;
     }
+    
+    public Boolean getRenewSession() {
+		return renewSession;
+	}
+    
+    public void setRenewSession(Boolean renewSession) {
+		this.renewSession = renewSession;
+	}
+    
+    public Boolean getSaveInSession() {
+		return saveInSession;
+	}
+    
+    public void setSaveInSession(Boolean saveInSession) {
+		this.saveInSession = saveInSession;
+	}
 
     public HttpActionAdapter<Object, J2EContext> getHttpActionAdapter() {
         return httpActionAdapter;
@@ -126,4 +149,12 @@ public class CallbackFilter implements Filter {
     public void setHttpActionAdapter(final HttpActionAdapter<Object, J2EContext> httpActionAdapter) {
         this.httpActionAdapter = httpActionAdapter;
     }
+    
+    public String getClient() {
+		return client;
+	}
+    
+    public void setClient(String client) {
+		this.client = client;
+	}
 }
