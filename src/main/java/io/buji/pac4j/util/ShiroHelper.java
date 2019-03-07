@@ -18,8 +18,13 @@
  */
 package io.buji.pac4j.util;
 
-import io.buji.pac4j.token.Pac4jToken;
+import java.util.LinkedHashMap;
+import java.util.List;
+
 import org.apache.shiro.SecurityUtils;
+import org.apache.shiro.mgt.AuthorizingSecurityManager;
+import org.apache.shiro.realm.CachingRealm;
+import org.apache.shiro.subject.PrincipalCollection;
 import org.pac4j.core.authorization.authorizer.Authorizer;
 import org.pac4j.core.authorization.authorizer.IsFullyAuthenticatedAuthorizer;
 import org.pac4j.core.authorization.authorizer.IsRememberedAuthorizer;
@@ -28,8 +33,7 @@ import org.pac4j.core.exception.TechnicalException;
 import org.pac4j.core.profile.CommonProfile;
 import org.pac4j.core.profile.ProfileHelper;
 
-import java.util.LinkedHashMap;
-import java.util.List;
+import io.buji.pac4j.token.Pac4jToken;
 
 /**
  * Helper for Shiro.
@@ -57,6 +61,16 @@ public class ShiroHelper {
                 } else if (IS_REMEMBERED_AUTHORIZER.isAuthorized(null, listProfiles)) {
                     SecurityUtils.getSubject().login(new Pac4jToken(profiles, true));
                 }
+                
+	            // clear authorization cache
+	    		org.apache.shiro.mgt.SecurityManager sm = SecurityUtils.getSecurityManager();
+	    		if (sm instanceof AuthorizingSecurityManager) {
+	    			org.apache.shiro.authz.Authorizer az = ((AuthorizingSecurityManager)sm).getAuthorizer();
+	    			if(az instanceof CachingRealm) {
+	    				PrincipalCollection principals = SecurityUtils.getSubject().getPrincipals();
+	    				((CachingRealm)az).onLogout(principals);
+	    			}
+	    		}
             } catch (final HttpAction e) {
                 throw new TechnicalException(e);
             }
