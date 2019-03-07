@@ -18,12 +18,14 @@
  */
 package io.buji.pac4j.util;
 
+import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 
 import org.apache.shiro.SecurityUtils;
-import org.apache.shiro.mgt.AuthorizingSecurityManager;
+import org.apache.shiro.mgt.RealmSecurityManager;
 import org.apache.shiro.realm.CachingRealm;
+import org.apache.shiro.realm.Realm;
 import org.apache.shiro.subject.PrincipalCollection;
 import org.pac4j.core.authorization.authorizer.Authorizer;
 import org.pac4j.core.authorization.authorizer.IsFullyAuthenticatedAuthorizer;
@@ -32,6 +34,8 @@ import org.pac4j.core.exception.HttpAction;
 import org.pac4j.core.exception.TechnicalException;
 import org.pac4j.core.profile.CommonProfile;
 import org.pac4j.core.profile.ProfileHelper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import io.buji.pac4j.token.Pac4jToken;
 
@@ -46,6 +50,8 @@ public class ShiroHelper {
     private final static Authorizer<CommonProfile> IS_REMEMBERED_AUTHORIZER = new IsRememberedAuthorizer<>();
 
     private final static Authorizer<CommonProfile> IS_FULLY_AUTHENTICATED_AUTHORIZER = new IsFullyAuthenticatedAuthorizer<>();
+    
+    private final static Logger logger = LoggerFactory.getLogger(ShiroHelper.class);
 
     /**
      * Populate the authenticated user profiles in the Shiro subject.
@@ -64,11 +70,17 @@ public class ShiroHelper {
                 
 	            // clear authorization cache
 	    		org.apache.shiro.mgt.SecurityManager sm = SecurityUtils.getSecurityManager();
-	    		if (sm instanceof AuthorizingSecurityManager) {
-	    			org.apache.shiro.authz.Authorizer az = ((AuthorizingSecurityManager)sm).getAuthorizer();
-	    			if(az instanceof CachingRealm) {
-	    				PrincipalCollection principals = SecurityUtils.getSubject().getPrincipals();
-	    				((CachingRealm)az).onLogout(principals);
+	    		if (sm instanceof RealmSecurityManager) {
+	    			Collection<Realm>  realms= ((RealmSecurityManager)sm).getRealms();
+	    			for(Realm rm :realms) {
+		    			if(rm instanceof CachingRealm) {
+		    				PrincipalCollection principals = SecurityUtils.getSubject().getPrincipals();
+		    				if (logger.isDebugEnabled()) {
+		    					logger.debug(String.format("clear realm[%s] cache for: %s", 
+		    							rm.getName(), profiles));
+		    				}
+		    				((CachingRealm)rm).onLogout(principals);
+		    			}
 	    			}
 	    		}
             } catch (final HttpAction e) {
